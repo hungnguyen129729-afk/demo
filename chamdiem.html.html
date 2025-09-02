@@ -1,0 +1,446 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sổ Cờ Đỏ Online – Nhập vi phạm</title>
+  <style>
+    :root{
+      --bg:#f7f7fb;
+      --card:#ffffff;
+      --text:#222;
+      --muted:#6b7280;
+      --primary:#ef4444;
+      --accent:#2563eb;
+      --border:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text); background:var(--bg);
+      line-height:1.45;
+    }
+    header{
+      position:sticky; top:0; z-index:5;
+      background:var(--card); border-bottom:1px solid var(--border);
+      padding:12px 20px; display:flex; align-items:center; gap:12px;
+    }
+    header .flag{
+      width:28px; height:28px; border-radius:6px; background:var(--primary);
+      display:inline-block;
+      mask: none;
+    }
+    header h1{margin:0; font-size:20px}
+    .container{max-width:1100px; margin:24px auto; padding:0 16px}
+    .grid{display:grid; gap:16px}
+    .card{
+      background:var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:16px;
+      box-shadow: 0 1px 2px rgba(16,24,40,.05);
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .col{flex:1 1 220px}
+    label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
+    select,input,textarea,button{
+      width:100%; padding:10px 12px; border:1px solid var(--border);
+      border-radius:10px; background:white; font-size:14px;
+    }
+    select:disabled,input:disabled,textarea:disabled{background:#f2f4f7}
+    button{cursor:pointer; border:1px solid transparent}
+    .btn-primary{background:var(--accent); color:white}
+    .btn-ghost{background:white; border-color:var(--border);}
+    .btn-danger{background:var(--primary); color:white}
+    .toolbar{display:flex; gap:10px; flex-wrap:wrap}
+    table{width:100%; border-collapse:collapse; font-size:14px}
+    th,td{border-top:1px solid var(--border); padding:10px; text-align:left}
+    thead th{border-top:none; color:#374151; font-weight:600; background:#fafafa}
+    tfoot td{font-weight:700}
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#3730a3}
+    .right{ text-align:right }
+    .muted{ color:var(--muted) }
+    .pill{display:inline-flex; gap:6px; align-items:center; padding:4px 10px; border-radius:999px; background:#fee2e2; color:#b91c1c; font-size:12px}
+    .small{font-size:12px}
+    .sticky-actions{display:flex; justify-content:space-between; gap:8px; margin-top:10px; flex-wrap:wrap}
+    .hint{font-size:12px; color:var(--muted)}
+    .totals{display:flex; gap:8px; flex-wrap:wrap}
+    .totals .card{flex:1 1 200px}
+    .h2{margin:0 0 10px 0; font-size:18px}
+  </style>
+</head>
+<body>
+  <header>
+    <span class="flag"></span>
+    <h1>Sổ Cờ Đỏ Online – Nhập vi phạm</h1>
+  </header>
+
+  <div class="container grid">
+    <section class="card">
+      <h2 class="h2">➕ Thêm vi phạm</h2>
+      <div class="row">
+        <div class="col">
+          <label>Lớp</label>
+          <select id="lopSelect"></select>
+        </div>
+        <div class="col">
+          <label>Danh mục</label>
+          <select id="catSelect"></select>
+        </div>
+        <div class="col">
+          <label>Nội dung vi phạm</label>
+          <select id="viPhamSelect"></select>
+        </div>
+        <div class="col">
+          <label>Điểm/đơn vị</label>
+          <input id="diemInput" type="text" disabled />
+          <div class="hint small" id="unitHint"></div>
+        </div>
+        <div class="col">
+          <label>Số lượng (HS/lần)</label>
+          <input id="soLuongInput" type="number" min="1" value="1"/>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="col">
+          <label>Ghi chú</label>
+          <input id="ghiChuInput" type="text" placeholder="VD: 2 HS ăn trong lớp, giờ ra chơi..."/>
+        </div>
+      </div>
+      <div class="sticky-actions">
+        <div class="toolbar">
+          <button class="btn-primary" id="btnAdd">Thêm vào danh sách</button>
+          <button class="btn-ghost" id="btnReset">Xóa form</button>
+        </div>
+        <div class="toolbar">
+          <button class="btn-ghost" id="btnExport">Xuất CSV</button>
+          <button class="btn-ghost" id="btnClearAll">Xóa toàn bộ</button>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:8px">
+        Điểm sẽ tự động tính theo quy định (theo lớp/HS/lần) dựa trên tài liệu bạn cung cấp.
+      </div>
+    </section>
+
+    <section class="totals">
+      <div class="card">
+        <div class="muted small">Tổng mục trong ngày</div>
+        <div id="totalRows" style="font-size:24px; font-weight:700">0</div>
+      </div>
+      <div class="card">
+        <div class="muted small">Tổng điểm (tất cả lớp)</div>
+        <div id="totalPoints" style="font-size:24px; font-weight:700">0</div>
+      </div>
+      <div class="card">
+        <div class="muted small">Lớp bị trừ nhiều nhất</div>
+        <div id="topClass" style="font-size:18px; font-weight:700">—</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="h2">📋 Danh sách vi phạm trong ngày</h2>
+      <div class="row" style="margin-bottom:8px">
+        <div class="col"><label>Lọc theo lớp</label><select id="filterClass"></select></div>
+        <div class="col"><label>Tìm kiếm</label><input id="searchBox" type="text" placeholder="Nhập từ khóa..."/></div>
+      </div>
+      <div style="overflow:auto">
+        <table id="table">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Lớp</th>
+              <th>Danh mục</th>
+              <th>Nội dung</th>
+              <th class="right">Số lượng</th>
+              <th class="right">Điểm</th>
+              <th>Ghi chú</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5">Tổng</td>
+              <td class="right" id="tfootPoints">0</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+  // ======= DỮ LIỆU QUY ĐỊNH (rút gọn theo tài liệu, có thể mở rộng thêm) =======
+  // unit: 'lop' = áp cho cả lớp/1 lần ghi, 'hs' = theo học sinh, 'lan' = theo lần
+  const RULES = {
+    "Nề nếp 15 phút đầu giờ": [
+      {name:"Có trống mà lớp vẫn ở ngoài", point:-10, unit:"lop"},
+      {name:"Lớp không tổ chức sinh hoạt", point:-10, unit:"lop"},
+      {name:"HS ra ngoài không nhiệm vụ", point:-2, unit:"hs"},
+      {name:"Sinh hoạt ồn, sai chủ đề, nhiều lần", point:-5, unit:"lop"},
+    ],
+    "Vệ sinh": [
+      {name:"Khăn bàn, bình hoa, rơi rác", point:-2, unit:"lop"},
+      {name:"Trực nhật chậm / vệ sinh bẩn trong lớp", point:-5, unit:"lop"},
+      {name:"Vệ sinh bẩn trước/sau lớp, cầu thang", point:-5, unit:"lop"},
+      {name:"HS mang đồ ăn vào lớp", point:-5, unit:"hs"},
+      {name:"Ăn xong không dọn", point:-5, unit:"hs"},
+    ],
+    "Chuyên cần": [
+      {name:"HS đi trễ", point:-2, unit:"hs"},
+      {name:"Vắng không phép", point:-3, unit:"hs"},
+      {name:"Vắng có phép", point:-1, unit:"hs"},
+      {name:"Bỏ giờ", point:-10, unit:"hs"},
+      {name:"Báo cáo gian lận", point:-20, unit:"lop"},
+    ],
+    "Tác phong": [
+      {name:"Không đeo bảng tên/không đồng phục", point:-2, unit:"hs"},
+      {name:"Đoàn viên không đeo huy hiệu", point:-2, unit:"hs"},
+      {name:"Nam tóc không đúng quy định (nhuộm/uốn...)", point:-5, unit:"hs"},
+      {name:"Nữ tóc/son/móng tay không đúng quy định", point:-5, unit:"hs"},
+      {name:"Mang dép không quai sau/không đúng quy định", point:-2, unit:"hs"},
+      {name:"Bỏ áo ra ngoài quần", point:-1, unit:"hs"},
+    ],
+    "Chào cờ": [
+      // Tài liệu nêu 1 mục chưa rõ điểm; chỉ đưa các mục có điểm rõ
+      {name:"Xếp hàng chậm", point:-10, unit:"lop"},
+      {name:"Mất trật tự trong giờ chào cờ (mỗi HS)", point:-1, unit:"hs"},
+      {name:"Bỏ ghế lại sân trường", point:-5, unit:"lop"},
+      {name:"Bỏ chào cờ", point:-8, unit:"hs"},
+    ],
+    "ATGT & PC TNXH": [
+      {name:"Đi xe trong sân trường lạng lách/đánh võng...", point:-10, unit:"hs"},
+      {name:"Hút thuốc/uống rượu/cờ bạc...", point:-25, unit:"hs"},
+      {name:"Tụ tập gây cản trở giao thông", point:-10, unit:"hs"},
+      {name:"Leo tường/đánh nhau/trộm cắp", point:-25, unit:"hs"},
+    ],
+    "Vi phạm khác": [
+      {name:"Vi phạm kiểm tra, thi cử", point:-10, unit:"hs"},
+      {name:"Lấy ghế lớp khác ngồi", point:-5, unit:"hs"},
+      {name:"Đi vệ sinh không đúng nơi quy định", point:-5, unit:"hs"},
+      {name:"Đổ rác không đúng nơi quy định", point:-5, unit:"lop"},
+      {name:"Làm hỏng bàn ghế, không tắt điện/quạt, dẫm tường", point:-10, unit:"lop"},
+      {name:"Không khóa cửa chính khi ra khỏi lớp", point:-5, unit:"lop"},
+      {name:"Không đóng cửa sổ", point:-2, unit:"lan"},
+      {name:"La hét, chạy nhảy, gây mất trật tự", point:-5, unit:"hs"},
+      {name:"Ngủ trong giờ học", point:-3, unit:"hs"},
+      {name:"Dùng điện thoại trong giờ học/SH 15'", point:-10, unit:"hs"},
+      {name:"Mang chìa khóa về nhà", point:-10, unit:"lop"},
+      {name:"Để chìa khóa không đúng vị trí", point:-3, unit:"lop"},
+      {name:"Ra ngoài khu vực trường không lý do/không xin phép", point:-5, unit:"hs"},
+      {name:"Lớp trực không cập nhật đủ nội dung vào sổ chính", point:-10, unit:"lop"},
+      {name:"BCH Chi đoàn/Chi hội vắng họp có phép", point:-2, unit:"lop"},
+      {name:"BCH Chi đoàn/Chi hội vắng họp không phép", point:-5, unit:"lop"},
+      {name:"Vô lễ với giáo viên", point:-25, unit:"hs"},
+      {name:"Không tôn trọng cờ đỏ", point:-5, unit:"lan"},
+      {name:"Cờ đỏ lớp bỏ trực/không nghiêm túc/không hoàn thành", point:-10, unit:"lop"},
+    ],
+  };
+
+  // ======= LỚP MẶC ĐỊNH (có thể chỉnh trong UI) =======
+  const CLASSES = ["10A1","10A2","10A3","10A4","10A5","10A6","10A7","11A1","11A2","11A3","11A4","11A5","11A6","11A7","11A8","11A9","11A10","11A11","12A1","12A2","12A3","12A4","12A5","12A6","12A7","12A8","12A9","12A10"];
+
+  // ======= STATE =======
+  const state = {
+    rows: JSON.parse(localStorage.getItem("scdo_rows") || "[]"),
+    filterClass: "ALL",
+    search: ""
+  };
+
+  // ======= HELPER =======
+  const $ = (s)=>document.querySelector(s);
+  const fmt = (n)=> (n<=0? n : "+"+n);
+  const nowStr = ()=> new Date().toLocaleString("vi-VN");
+
+  function save(){
+    localStorage.setItem("scdo_rows", JSON.stringify(state.rows));
+  }
+
+  // ======= INIT CONTROLS =======
+  function initControls(){
+    const lopSel = $("#lopSelect");
+    const filterSel = $("#filterClass");
+    lopSel.innerHTML = CLASSES.map(c=>`<option value="${c}">${c}</option>`).join("");
+    filterSel.innerHTML = `<option value="ALL">Tất cả</option>` + CLASSES.map(c=>`<option value="${c}">${c}</option>`).join("");
+
+    const catSel = $("#catSelect");
+    catSel.innerHTML = Object.keys(RULES).map(k=>`<option value="${k}">${k}</option>`).join("");
+
+    catSel.addEventListener("change", onCategoryChange);
+    $("#viPhamSelect").addEventListener("change", onViolationChange);
+    $("#soLuongInput").addEventListener("input", refreshPointPreview);
+    onCategoryChange();
+  }
+
+  function onCategoryChange(){
+    const cat = $("#catSelect").value;
+    const list = RULES[cat] || [];
+    $("#viPhamSelect").innerHTML = list.map((v,i)=>`<option value="${i}">${v.name}</option>`).join("");
+    onViolationChange();
+  }
+
+  function onViolationChange(){
+    const {point, unit} = getSelectedRule();
+    $("#diemInput").value = fmt(point);
+    $("#unitHint").textContent = unit==="hs" ? "Đơn vị: mỗi học sinh"
+                           : unit==="lop" ? "Đơn vị: theo lớp/lần ghi"
+                           : "Đơn vị: theo lần (mỗi lần áp dụng điểm)";
+    refreshPointPreview();
+  }
+
+  function getSelectedRule(){
+    const cat = $("#catSelect").value;
+    const idx = +$("#viPhamSelect").value || 0;
+    const rule = (RULES[cat]||[])[idx];
+    return rule || {point:0, unit:"lan"};
+  }
+
+  function refreshPointPreview(){
+    const sl = Math.max(1, +$("#soLuongInput").value || 1);
+    const {point, unit} = getSelectedRule();
+    const total = unit==="hs" ? point*sl : unit==="lan" ? point*sl : point; // 'lop' ignores count
+    $("#diemInput").value = fmt(total);
+  }
+
+  // ======= RENDER TABLE =======
+  function render(){
+    const tbody = $("#table tbody");
+    const filter = state.filterClass;
+    const search = state.search.toLowerCase();
+    let total = 0;
+    tbody.innerHTML = state.rows
+      .filter(r => filter==="ALL" || r.lop===filter)
+      .filter(r => JSON.stringify(r).toLowerCase().includes(search))
+      .map((r,idx)=>{
+        total += r.total;
+        return `<tr data-index="${idx}">
+          <td>${r.time}</td>
+          <td><span class="badge">${r.lop}</span></td>
+          <td>${r.cat}</td>
+          <td>${r.name}</td>
+          <td class="right">${r.soLuong}</td>
+          <td class="right"><span class="pill">${r.total}</span></td>
+          <td>${r.note||""}</td>
+          <td class="right"><button class="btn-danger small" onclick="deleteRow(${idx})">Xóa</button></td>
+        </tr>`;
+      }).join("");
+
+    $("#tfootPoints").textContent = total;
+    $("#totalPoints").textContent = total;
+    $("#totalRows").textContent = state.rows.length;
+
+    // top class summary
+    const byClass = {};
+    state.rows.forEach(r => { byClass[r.lop] = (byClass[r.lop]||0) + r.total; });
+    let top = "—", min = 0;
+    Object.entries(byClass).forEach(([lop,pt])=>{
+      if(pt < min){ min = pt; top = `${lop} (${pt})`; }
+    });
+    $("#topClass").textContent = top;
+  }
+
+  window.deleteRow = function(index){
+    if(!confirm("Xóa mục này?")) return;
+    state.rows.splice(index,1);
+    save(); render();
+  }
+
+  // ======= EVENT HANDLERS =======
+  $("#btnAdd").addEventListener("click", ()=>{
+    const lop = $("#lopSelect").value;
+    const cat = $("#catSelect").value;
+    const idx = +$("#viPhamSelect").value || 0;
+    const rule = RULES[cat][idx];
+    const soLuong = Math.max(1, +$("#soLuongInput").value || 1);
+    const note = $("#ghiChuInput").value.trim();
+
+    if(!lop || !rule){ alert("Vui lòng chọn Lớp và Nội dung vi phạm."); return; }
+
+    const total = (rule.unit==="hs" ? rule.point * soLuong : rule.unit==="lan" ? rule.point * soLuong : rule.point);
+
+    state.rows.push({
+      time: nowStr(),
+      lop, cat,
+      name: rule.name,
+      unit: rule.unit,
+      soLuong,
+      pointPerUnit: rule.point,
+      total,
+      note
+    });
+    save(); render();
+    // reset some inputs
+    $("#soLuongInput").value = 1;
+    $("#ghiChuInput").value = "";
+    refreshPointPreview();
+  });
+
+  $("#btnReset").addEventListener("click", ()=>{
+    $("#soLuongInput").value = 1;
+    $("#ghiChuInput").value = "";
+    $("#lopSelect").selectedIndex = 0;
+    $("#catSelect").selectedIndex = 0;
+    onCategoryChange();
+  });
+
+  $("#btnClearAll").addEventListener("click", ()=>{
+    if(!confirm("Xóa toàn bộ mục đã nhập trong ngày?")) return;
+    state.rows = [];
+    save(); render();
+  });
+
+  $("#filterClass").addEventListener("change", (e)=>{
+    state.filterClass = e.target.value;
+    render();
+  });
+
+  $("#searchBox").addEventListener("input", (e)=>{
+    state.search = e.target.value;
+    render();
+  });
+
+  function exportCSV(){
+    const header = ["Thời gian","Lớp","Danh mục","Nội dung","Số lượng","Điểm/đơn vị","Đơn vị","Tổng điểm","Ghi chú"];
+    const lines = [header.join(",")];
+    state.rows.forEach(r=>{
+      const row = [
+        r.time, r.lop, r.cat, r.name, r.soLuong,
+        r.pointPerUnit, r.unit, r.total, r.note ? r.note.replace(/,/g,";") : ""
+      ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+      lines.push(row.join(","));
+    });
+    const blob = new Blob([lines.join("\\n")], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "so_co_do_nhap_vi_pham.csv";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+  $("#btnExport").addEventListener("click", exportCSV);
+
+  // Boot
+  initControls();
+  render();
+  </script>
+
+  <!-- ====== KIỂM TRA ĐĂNG NHẬP ====== -->
+  <script>
+  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+  if (!currentUser) {
+    alert("Vui lòng đăng nhập trước!");
+    window.location.href = "account.html";
+  } else {
+    if (currentUser.role === "student") {
+      const directClasses = JSON.parse(localStorage.getItem("directClasses") || "[]");
+      if (!directClasses.includes(currentUser.class)) {
+        const addSection = document.querySelector(".container .card");
+        if (addSection) addSection.style.display = "none";
+        alert(`Lớp ${currentUser.class} đang ở chế độ xem, không được nhập vi phạm.`);
+      }
+    }
+  }
+  </script>
+
+</body>
+</html>
